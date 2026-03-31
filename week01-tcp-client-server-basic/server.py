@@ -57,3 +57,27 @@ def start_server():
 
 if __name__ == "__main__":
     start_server()
+
+
+# extensions/server_loop.py
+import socket
+from config import HOST, PORT, BUFFER_SIZE
+
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind((HOST, PORT))
+server_socket.listen(5)
+
+print("[SERVER] persistent server started")
+
+while True:
+    conn, addr = server_socket.accept()
+    print(f"[SERVER] connected {addr}")
+
+    data = conn.recv(BUFFER_SIZE)
+
+    if data:
+        msg = data.decode()
+        reply = f"ACK: {msg}"
+        conn.sendall(reply.encode())
+
+    conn.close()

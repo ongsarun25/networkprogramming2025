@@ -47,3 +47,51 @@ if __name__ == "__main__":
     # Send a test message to neighbors
     test_message = f"Hello from node {BASE_PORT}"
     forward_message(test_message, TTL)
+
+
+import uuid
+import time
+
+# Store recently seen message IDs
+seen_messages = {}
+
+MESSAGE_CACHE_TTL = 30  # seconds
+
+def is_duplicate(message_id):
+    """Check if message already processed."""
+    now = time.time()
+    
+    # Clean expired entries
+    expired = [mid for mid, ts in seen_messages.items() if now - ts > MESSAGE_CACHE_TTL]
+    for mid in expired:
+        del seen_messages[mid]
+    
+    if message_id in seen_messages:
+        return True
+    
+    seen_messages[message_id] = now
+    return False
+
+
+HEARTBEAT_INTERVAL = 5
+
+def heartbeat():
+    
+    while True:
+        
+        for neighbor in list(neighbor_table):
+            
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(1)
+                s.connect((HOST, neighbor))
+                s.close()
+                
+            except:
+                print(f"[NODE {BASE_PORT}] Removing inactive neighbor {neighbor}")
+                neighbor_table.remove(neighbor)
+        
+        time.sleep(HEARTBEAT_INTERVAL)
+
+threading.Thread(target=heartbeat, daemon=True).start()
+
